@@ -1,10 +1,9 @@
-import "./index.css"
+import Dashboard from "./pages/Dashboard";
 
-function App() {
-
+export default function App() {
   return (
-    <h1 className='text-red-600'>Test</h1>
-  )
+    <div className="min-h-screen bg-gray-100">
+      <Dashboard />
+    </div>
+  );
 }
-
-export default App

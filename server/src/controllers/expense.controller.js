@@ -1,4 +1,5 @@
 import Expense from "../models/Expense.js";
+import mongoose from "mongoose";
 
 /**
  * Create Expense
@@ -155,7 +156,7 @@ export const getCategoryBreakdown = async (req, res) => {
     const data = await Expense.aggregate([
       {
         $match: {
-          userId: req.userId,
+          userId: new mongoose.Types.ObjectId(req.userId),
           type: "expense",
           date: { $gte: start, $lt: end },
         },
