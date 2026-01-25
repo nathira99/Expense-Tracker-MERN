@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from "recharts";
-import { User2Icon } from "lucide-react"
-import UsedRing from "../components/UserdRing";
+import { User2 } from "lucide-react"
 import BottomDock from "../components/BottomDock";
 
 export default function Dashboard() {
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const navigate = useNavigate();
+
+  const [month, setMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  );
 
   const [summary, setSummary] = useState({
     income: 0,
@@ -24,13 +24,6 @@ export default function Dashboard() {
   });
 
   const [categories, setCategories] = useState([]);
-  const [budgets, setBudgets] = useState([]);
-  const [trend, setTrend] = useState([]);
-
-  const totalBudget = budgets.reduce((s, b) => s + b.amount, 0);
-  const totalUsed = budgets.reduce((s, b) => s + b.used, 0);
-  const usedPercent =
-    totalBudget > 0 ? Math.round((totalUsed / totalBudget) * 100) : 0;
 
   useEffect(() => {
     fetchDashboard();
@@ -38,32 +31,78 @@ export default function Dashboard() {
 
   const fetchDashboard = async () => {
     try {
-      const [summaryRes, categoryRes, budgetRes, trendRes] = await Promise.all([
+      const [summaryRes, categoryRes] = await Promise.all([
         api.get(`/expenses/summary/monthly?month=${month}`),
         api.get(`/expenses/summary/category?month=${month}`),
-        api.get(`/budgets?month=${month}`),
-        api.get(`/expenses/summary/trend?month=${month}`),
       ]);
 
       setSummary(summaryRes.data);
       setCategories(categoryRes.data);
-      setBudgets(budgetRes.data);
-      setTrend(trendRes.data);
     } catch (err) {
-      console.error("Dashboard fetch error", err);
+      console.error("Dashboard error", err);
     }
   };
 
+  /* ---------------- SMART STATUS ---------------- */
+
+  let statusMessage = "You’re managing your money well ";
+
+  if (summary.expense > summary.income) {
+    statusMessage = "Spending exceeded income this month";
+  } else if (summary.income > 0) {
+    const percent = Math.round(
+      (summary.expense / summary.income) * 100
+    );
+
+    if (percent > 85) {
+      statusMessage =
+        "Careful — most of your income is already spent";
+    }
+  }
+
+  /* ---------------- DONUT DATA ---------------- */
+
+  const donutData = categories.map((c) => ({
+    name: c._id,
+    value: c.total,
+  }));
+
+  const COLORS = [
+    "#111827",
+    "#16a34a",
+    "#6366f1",
+    "#f59e0b",
+    "#ef4444",
+    "#14b8a6",
+  ];
+
+  /* ---------------- INSIGHTS ---------------- */
+
+  const topCategory =
+    categories.length > 0
+      ? categories.reduce((a, b) =>
+          a.total > b.total ? a : b
+        )
+      : null;
+
+  const usedPercent =
+    summary.income > 0
+      ? Math.round((summary.expense / summary.income) * 100)
+      : 0;
+
+  const weekSpend = Math.round(summary.expense * 0.25);
+
   return (
     <div className="min-h-screen bg-[#F6F7FB] pb-32">
-      <div className="max-w-md mx-auto px-5 pt-6 space-y-8">
+      <div className="max-w-md mx-auto px-5 pt-6 space-y-6">
+
         {/* TOP BAR */}
         <div className="flex items-center justify-between">
           <input
             type="month"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm"
+            className="rounded-xl border bg-white px-3 py-1.5 text-sm"
           />
 
           <button
@@ -71,22 +110,24 @@ export default function Dashboard() {
               localStorage.removeItem("token");
               window.location.reload();
             }}
-            className="w-7 h-7 pl-0.5 rounded-full bg-black text-white text-sm shadow"
+            className="w-7 h-7 pl-0.5 rounded-full bg-black text-white"
           >
-            <User2Icon />
+            <User2 />
           </button>
         </div>
 
-        {/* BALANCE (HERO) */}
-        <div className="rounded-[28px] bg-gradient-to-br from-black to-gray-800 p-6 text-white shadow-lg">
-          <p className="text-xs opacity-70">Current Balance</p>
-          <p className="mt-2 text-3xl font-semibold tracking-tight">
+        {/* BALANCE */}
+        <div className="rounded-3xl bg-black p-6 text-white">
+          <p className="text-xs opacity-70">
+            Current Balance
+          </p>
+          <p className="mt-2 text-3xl font-semibold">
             ₹{summary.balance}
           </p>
         </div>
 
         {/* METRICS */}
-        <div className="grid grid-cols-3 gap-3 items-stretch">
+        <div className="grid grid-cols-2 gap-3">
           <MetricCard
             label="Income"
             value={summary.income}
@@ -99,85 +140,83 @@ export default function Dashboard() {
             prefix="₹"
             color="text-red-500"
           />
+        </div>
 
-          <UsedRing
-            percent={usedPercent}
-            used={totalUsed}
-            total={totalBudget}
+        {/* STATUS MESSAGE */}
+        <div className="rounded-xl bg-white px-4 py-3 text-sm text-gray-700 shadow-sm">
+          {statusMessage}
+        </div>
+
+        {/* SPENDING BREAKDOWN */}
+        <section>
+          <h3 className="mb-3 text-sm font-medium">
+            Spending Breakdown
+          </h3>
+
+          <div className="rounded-2xl bg-white p-4 shadow-sm">
+            {donutData.length === 0 ? (
+              <p className="text-sm text-gray-400">
+                No expenses this month
+              </p>
+            ) : (
+              <div className="h-56 relative">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      dataKey="value"
+                      innerRadius={72}
+                      outerRadius={98}
+                      paddingAngle={5}
+                      onClick={(_, index) => {
+                        const category = donutData[index].name;
+                        navigate(
+                          `/expenses?month=${month}&category=${encodeURIComponent(
+                            category
+                          )}`
+                        );
+                      }}
+                    >
+                      {donutData.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={COLORS[i % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* CENTER */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <p className="text-xs text-gray-400">
+                    Total Spent
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-gray-900">
+                    ₹{summary.expense}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* INSIGHTS */}
+        <div className="grid grid-cols-3 gap-3">
+          <InsightCard
+            label="Top Category"
+            value={topCategory?._id || "-"}
+          />
+          <InsightCard
+            label="Used"
+            value={`${usedPercent}%`}
+          />
+          <InsightCard
+            label="This Week"
+            value={`₹${weekSpend}`}
           />
         </div>
 
-        {/* CATEGORY BAR CHART */}
-        <ChartCard title="Spending by Category">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={categories}>
-              <XAxis
-                dataKey="_id"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis hide />
-              <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
-              <Bar dataKey="total" radius={[8, 8, 0, 0]} fill="#000" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        {/* TREND LINE CHART */}
-        <ChartCard title="Income vs Expense">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={trend}>
-              <defs>
-                <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#16a34a" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#16a34a" stopOpacity={0} />
-                </linearGradient>
-
-                <linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-
-              <XAxis
-                dataKey="day"
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis hide />
-
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "none",
-                  fontSize: "12px",
-                }}
-              />
-
-              {/* Income (background, calmer) */}
-              <Area
-                type="monotone"
-                dataKey="income"
-                stroke="#16a34a"
-                strokeWidth={2}
-                fill="url(#incomeFill)"
-                dot={false}
-              />
-
-              {/* Expense (foreground, stronger) */}
-              <Area
-                type="monotone"
-                dataKey="expense"
-                stroke="#ef4444"
-                strokeWidth={2.5}
-                fill="url(#expenseFill)"
-                dot={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
       </div>
 
       <BottomDock onExpenseAdded={fetchDashboard} />
@@ -187,24 +226,29 @@ export default function Dashboard() {
 
 /* ---------------- COMPONENTS ---------------- */
 
-function MetricCard({ label, value, prefix = "", color, subtle }) {
+function MetricCard({ label, value, prefix = "", color }) {
   return (
-    <div className="rounded-2xl bg-white/90 backdrop-blur p-4 shadow-sm">
+    <div className="rounded-2xl bg-white p-4 shadow-sm">
       <p className="text-xs text-gray-400">{label}</p>
-      <p className={`mt-1 text-lg font-semibold ${color || "text-gray-900"}`}>
+      <p
+        className={`mt-1 text-lg font-semibold ${
+          color || "text-gray-900"
+        }`}
+      >
         {prefix}
         {value}
       </p>
-      {subtle && <p className="mt-1 text-[11px] text-gray-400">{subtle}</p>}
     </div>
   );
 }
 
-function ChartCard({ title, children }) {
+function InsightCard({ label, value }) {
   return (
-    <div className="rounded-2xl bg-white/90 backdrop-blur p-4 shadow-sm">
-      <p className="mb-3 text-sm font-medium text-gray-800">{title}</p>
-      {children}
+    <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+      <p className="text-xs text-gray-400">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-gray-900">
+        {value}
+      </p>
     </div>
   );
 }
