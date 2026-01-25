@@ -112,7 +112,7 @@ export const getMonthlySummary = async (req, res) => {
     const summary = await Expense.aggregate([
       {
         $match: {
-          userId: req.userId,
+          userId: new mongoose.Types.ObjectId(req.userId),
           date: { $gte: start, $lt: end },
         },
       },
@@ -173,5 +173,73 @@ export const getCategoryBreakdown = async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const getMonthlyTrend = async (req, res) => {
+  try {
+    const { month } = req.query;
+    const userId = req.userId;
+
+    if (!month) {
+      return res.status(400).json({ message: "Month is required" });
+    }
+
+    const startDate = new Date(`${month}-01`);
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1);
+
+    const data = await Expense.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          date: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            day: { $dayOfMonth: "$date" },
+            type: "$type",
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $group: {
+          _id: "$_id.day",
+          income: {
+            $sum: {
+              $cond: [{ $eq: ["$_id.type", "income"] }, "$total", 0],
+            },
+          },
+          expense: {
+            $sum: {
+              $cond: [{ $eq: ["$_id.type", "expense"] }, "$total", 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          day: {
+            $cond: [
+              { $lt: ["$_id", 10] },
+              { $concat: ["0", { $toString: "$_id" }] },
+              { $toString: "$_id" },
+            ],
+          },
+          income: 1,
+          expense: 1,
+        },
+      },
+      { $sort: { day: 1 } },
+    ]);
+
+    res.json(data);
+  } catch (err) {
+    console.error("Trend error", err);
+    res.status(500).json({ message: "Failed to fetch trend" });
   }
 };
