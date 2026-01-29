@@ -3,6 +3,7 @@ import Dashboard from "./pages/Dashboard";
 import Budgets from "./pages/Budgets";
 import Expenses from "./pages/Expenses";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 const PrivateRoute = ({ children }) => {
   return localStorage.getItem("token")
@@ -15,6 +16,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/"
           element={

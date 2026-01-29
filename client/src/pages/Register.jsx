@@ -2,29 +2,30 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", {
+      await api.post("/auth/register", {
+        name,
         email,
         password,
       });
 
-      localStorage.setItem("token", res.data.token);
-      navigate("/");
+      navigate("/login");
     } catch (err) {
-      setError("Invalid email or password");
+      setError("Account already exists");
     } finally {
       setLoading(false);
     }
@@ -36,15 +37,17 @@ export default function Login() {
 
         {/* Brand */}
         <div className="text-center">
-          <h1 className="text-2xl font-semibold">Welcome back</h1>
+          <h1 className="text-2xl font-semibold">
+            Create account
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Sign in to continue
+            Start tracking your expenses
           </p>
         </div>
 
         {/* Card */}
         <form
-          onSubmit={handleLogin}
+          onSubmit={handleRegister}
           className="rounded-2xl bg-white p-6 shadow-sm space-y-4"
         >
           {error && (
@@ -52,6 +55,15 @@ export default function Login() {
               {error}
             </p>
           )}
+
+          <input
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="w-full rounded-xl bg-gray-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-black/10"
+          />
 
           <input
             type="email"
@@ -76,18 +88,18 @@ export default function Login() {
             disabled={loading}
             className="w-full rounded-xl bg-black py-3 text-sm font-medium text-white active:scale-[0.98] transition"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500">
-          Don’t have an account?{" "}
+          Already have an account?{" "}
           <Link
-            to="/register"
+            to="/login"
             className="font-medium text-black"
           >
-            Create one
+            Sign in
           </Link>
         </p>
       </div>

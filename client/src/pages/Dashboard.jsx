@@ -7,7 +7,9 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-import { User2 } from "lucide-react"
+import { User2 } from "lucide-react";
+
+import AppContainer from "../components/AppContainer";
 import BottomDock from "../components/BottomDock";
 
 export default function Dashboard() {
@@ -45,7 +47,7 @@ export default function Dashboard() {
 
   /* ---------------- SMART STATUS ---------------- */
 
-  let statusMessage = "You’re managing your money well ";
+  let statusMessage = "You’re managing your money well";
 
   if (summary.expense > summary.income) {
     statusMessage = "Spending exceeded income this month";
@@ -53,7 +55,6 @@ export default function Dashboard() {
     const percent = Math.round(
       (summary.expense / summary.income) * 100
     );
-
     if (percent > 85) {
       statusMessage =
         "Careful — most of your income is already spent";
@@ -93,8 +94,8 @@ export default function Dashboard() {
   const weekSpend = Math.round(summary.expense * 0.25);
 
   return (
-    <div className="min-h-screen bg-[#F6F7FB] pb-32">
-      <div className="max-w-md mx-auto px-5 pt-6 space-y-6">
+    <AppContainer>
+      <div className="pb-32 pt-6 space-y-6">
 
         {/* TOP BAR */}
         <div className="flex items-center justify-between">
@@ -110,14 +111,14 @@ export default function Dashboard() {
               localStorage.removeItem("token");
               window.location.reload();
             }}
-            className="w-7 h-7 pl-0.5 rounded-full bg-black text-white"
+            className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center"
           >
-            <User2 />
+            <User2 size={18} />
           </button>
         </div>
 
         {/* BALANCE */}
-        <div className="rounded-3xl bg-black p-6 text-white">
+        <div className="w-full rounded-3xl bg-black p-6 text-white">
           <p className="text-xs opacity-70">
             Current Balance
           </p>
@@ -127,7 +128,7 @@ export default function Dashboard() {
         </div>
 
         {/* METRICS */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <MetricCard
             label="Income"
             value={summary.income}
@@ -139,6 +140,10 @@ export default function Dashboard() {
             value={summary.expense}
             prefix="₹"
             color="text-red-500"
+          />
+          <MetricCard
+            label="Used"
+            value={`${usedPercent}%`}
           />
         </div>
 
@@ -159,14 +164,14 @@ export default function Dashboard() {
                 No expenses this month
               </p>
             ) : (
-              <div className="h-56 relative">
+              <div className="relative w-full aspect-square max-h-[280px] mx-auto">
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie
                       data={donutData}
                       dataKey="value"
-                      innerRadius={72}
-                      outerRadius={98}
+                      innerRadius="65%"
+                      outerRadius="90%"
                       paddingAngle={5}
                       onClick={(_, index) => {
                         const category = donutData[index].name;
@@ -202,7 +207,7 @@ export default function Dashboard() {
         </section>
 
         {/* INSIGHTS */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <InsightCard
             label="Top Category"
             value={topCategory?._id || "-"}
@@ -220,7 +225,7 @@ export default function Dashboard() {
       </div>
 
       <BottomDock onExpenseAdded={fetchDashboard} />
-    </div>
+    </AppContainer>
   );
 }
 

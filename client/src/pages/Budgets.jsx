@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import BudgetBar from "../components/BudgetBar";
+import AppContainer from "../components/AppContainer";
 import BottomDock from "../components/BottomDock";
 
 const CATEGORIES = [
@@ -52,83 +55,100 @@ export default function Budgets() {
 
   const getBudget = (category) => budgets.find((b) => b.category === category);
 
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen bg-[#F6F7FB] px-5 pt-10 pb-20 max-w-md mx-auto">
-      <h1 className="text-xl font-semibold mb-4">Budgets</h1>
-
-      {/* Month Selector */}
-      <input
-        type="month"
-        value={month}
-        onChange={(e) => setMonth(e.target.value)}
-        className="mb-6 w-full rounded-lg border px-3 py-2 text-sm"
-      />
-
-      <div className="space-y-6">
-        {CATEGORIES.map((category) => {
-          const budget = getBudget(category);
-          const isEditing = editing === category;
-
-          return (
-            <div
-              key={category}
-              className="relative rounded-2xl bg-white/80 backdrop-blur p-5 space-y-4"
+    <AppContainer>
+      <div className="pt-6 pb-32 space-y-6">
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/")}
+              className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <p className="font-medium">{category}</p>
+              <Home size={18} />
+            </button>
 
-                {!isEditing ? (
-                  <button
-                    onClick={() => startEdit(category, budget?.amount || "")}
-                    className="text-xs text-gray-500 underline"
-                  >
-                    {budget ? "Edit" : "Set"}
-                  </button>
-                ) : (
-                  <div className="flex gap-3 text-xs">
+            <h1 className="text-lg font-semibold">Budgets</h1>
+          </div>
+
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="rounded-xl border bg-white px-3 py-1.5 text-sm"
+          />
+        </div>
+
+        {/* GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {CATEGORIES.map((category) => {
+            const budget = getBudget(category);
+            const isEditing = editing === category;
+
+            return (
+              <div
+                key={category}
+                className="rounded-2xl bg-white/80 backdrop-blur p-5 space-y-4"
+              >
+                {/* HEADER */}
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">{category}</p>
+
+                  {!isEditing ? (
                     <button
-                      onClick={() => saveBudget(category)}
-                      className="text-black underline"
+                      onClick={() => startEdit(category, budget?.amount || "")}
+                      className="text-xs text-gray-500 underline"
                     >
-                      Save
+                      {budget ? "Edit" : "Set"}
                     </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="text-gray-400 underline"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="flex gap-3 text-xs">
+                      <button
+                        onClick={() => saveBudget(category)}
+                        className="text-black underline"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="text-gray-400 underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* BUDGET BAR */}
+                {budget && !isEditing && (
+                  <BudgetBar
+                    category={category}
+                    used={budget.used}
+                    total={budget.amount}
+                    showLabel={false}
+                  />
+                )}
+
+                {/* EDIT INPUT */}
+                {isEditing && (
+                  <input
+                    type="number"
+                    placeholder="Set monthly limit"
+                    value={draftAmount}
+                    onChange={(e) => setDraftAmount(e.target.value)}
+                    className="w-full rounded-xl bg-gray-100 px-4 py-2 text-sm outline-none"
+                    autoFocus
+                  />
                 )}
               </div>
-
-              {/* Budget Bar */}
-              {budget && (
-                <BudgetBar
-                  category={category}
-                  used={budget.used}
-                  total={budget.amount}
-                  showLabel={false}
-                />
-              )}
-
-              {/* Edit Input */}
-              {isEditing && (
-                <input
-                  type="number"
-                  placeholder="Set monthly limit"
-                  value={draftAmount}
-                  onChange={(e) => setDraftAmount(e.target.value)}
-                  className="w-full rounded-lg bg-gray-100 px-3 py-2 text-sm outline-none"
-                  autoFocus
-                />
-              )}
-            </div>
-          );
-        })}
-        <BottomDock />
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      <BottomDock />
+    </AppContainer>
   );
 }
