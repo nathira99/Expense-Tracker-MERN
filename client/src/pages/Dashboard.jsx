@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { User2 } from "lucide-react";
 
 import AppContainer from "../components/AppContainer";
@@ -15,9 +10,7 @@ import BottomDock from "../components/BottomDock";
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  const [month, setMonth] = useState(
-    new Date().toISOString().slice(0, 7)
-  );
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const [summary, setSummary] = useState({
     income: 0,
@@ -52,12 +45,9 @@ export default function Dashboard() {
   if (summary.expense > summary.income) {
     statusMessage = "Spending exceeded income this month";
   } else if (summary.income > 0) {
-    const percent = Math.round(
-      (summary.expense / summary.income) * 100
-    );
+    const percent = Math.round((summary.expense / summary.income) * 100);
     if (percent > 85) {
-      statusMessage =
-        "Careful — most of your income is already spent";
+      statusMessage = "Careful — most of your income is already spent";
     }
   }
 
@@ -81,9 +71,7 @@ export default function Dashboard() {
 
   const topCategory =
     categories.length > 0
-      ? categories.reduce((a, b) =>
-          a.total > b.total ? a : b
-        )
+      ? categories.reduce((a, b) => (a.total > b.total ? a : b))
       : null;
 
   const usedPercent =
@@ -96,7 +84,6 @@ export default function Dashboard() {
   return (
     <AppContainer>
       <div className="pb-32 pt-6 space-y-6">
-
         {/* TOP BAR */}
         <div className="flex items-center justify-between">
           <input
@@ -119,12 +106,8 @@ export default function Dashboard() {
 
         {/* BALANCE */}
         <div className="w-full rounded-3xl bg-black p-6 text-white">
-          <p className="text-xs opacity-70">
-            Current Balance
-          </p>
-          <p className="mt-2 text-3xl font-semibold">
-            ₹{summary.balance}
-          </p>
+          <p className="text-xs opacity-70">Current Balance</p>
+          <p className="mt-2 text-3xl font-semibold">₹{summary.balance}</p>
         </div>
 
         {/* METRICS */}
@@ -141,10 +124,7 @@ export default function Dashboard() {
             prefix="₹"
             color="text-red-500"
           />
-          <MetricCard
-            label="Used"
-            value={`${usedPercent}%`}
-          />
+          <MetricCard label="Used" value={`${usedPercent}%`} />
         </div>
 
         {/* STATUS MESSAGE */}
@@ -154,49 +134,41 @@ export default function Dashboard() {
 
         {/* SPENDING BREAKDOWN */}
         <section>
-          <h3 className="mb-3 text-sm font-medium">
-            Spending Breakdown
-          </h3>
+          <h3 className="mb-3 text-sm font-medium">Spending Breakdown</h3>
 
           <div className="rounded-2xl bg-white p-4 shadow-sm">
             {donutData.length === 0 ? (
-              <p className="text-sm text-gray-400">
-                No expenses this month
-              </p>
+              <p className="text-sm text-gray-400">No expenses this month</p>
             ) : (
-              <div className="relative w-full aspect-square max-h-[280px] mx-auto">
-                <ResponsiveContainer>
+              <div className="relative w-full h-[220px]">
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
                       data={donutData}
                       dataKey="value"
-                      innerRadius="65%"
-                      outerRadius="90%"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={65}
+                      outerRadius={90}
                       paddingAngle={5}
+                      isAnimationActive={false}
                       onClick={(_, index) => {
                         const category = donutData[index].name;
                         navigate(
-                          `/expenses?month=${month}&category=${encodeURIComponent(
-                            category
-                          )}`
+                          `/expenses?month=${month}&category=${encodeURIComponent(category)}`,
                         );
                       }}
                     >
                       {donutData.map((_, i) => (
-                        <Cell
-                          key={i}
-                          fill={COLORS[i % COLORS.length]}
-                        />
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
 
-                {/* CENTER */}
+                {/* CENTER LABEL */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-xs text-gray-400">
-                    Total Spent
-                  </p>
+                  <p className="text-xs text-gray-400">Total Spent</p>
                   <p className="mt-1 text-xl font-semibold text-gray-900">
                     ₹{summary.expense}
                   </p>
@@ -208,20 +180,10 @@ export default function Dashboard() {
 
         {/* INSIGHTS */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <InsightCard
-            label="Top Category"
-            value={topCategory?._id || "-"}
-          />
-          <InsightCard
-            label="Used"
-            value={`${usedPercent}%`}
-          />
-          <InsightCard
-            label="This Week"
-            value={`₹${weekSpend}`}
-          />
+          <InsightCard label="Top Category" value={topCategory?._id || "-"} />
+          <InsightCard label="Used" value={`${usedPercent}%`} />
+          <InsightCard label="This Week" value={`₹${weekSpend}`} />
         </div>
-
       </div>
 
       <BottomDock onExpenseAdded={fetchDashboard} />
@@ -235,11 +197,7 @@ function MetricCard({ label, value, prefix = "", color }) {
   return (
     <div className="rounded-2xl bg-white p-4 shadow-sm">
       <p className="text-xs text-gray-400">{label}</p>
-      <p
-        className={`mt-1 text-lg font-semibold ${
-          color || "text-gray-900"
-        }`}
-      >
+      <p className={`mt-1 text-lg font-semibold ${color || "text-gray-900"}`}>
         {prefix}
         {value}
       </p>
@@ -251,9 +209,7 @@ function InsightCard({ label, value }) {
   return (
     <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
       <p className="text-xs text-gray-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-gray-900">
-        {value}
-      </p>
+      <p className="mt-1 text-sm font-semibold text-gray-900">{value}</p>
     </div>
   );
 }

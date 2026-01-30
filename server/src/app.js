@@ -6,7 +6,12 @@ import budgetRoutes from "./routes/budget.routes.js"
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173",
+    "https://smart-expense-tracker-fe.onrender.com"
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
